@@ -6,7 +6,6 @@
 const char * WavPlayer::files_to_play[4] = {"CHARLIE.WAV", "GABBY.WAV", "CHARLIE.WAV", "GABBY.WAV"};
 
 void WavPlayer::initialize(){
-  Serial.begin(9600);
   pinMode(10, OUTPUT); // Pin 10 must be left as an output or the SD library functions will not work.
   if (!sd.begin(SD_CS_PIN, SPI_HALF_SPEED)){
     sd.initErrorHalt();

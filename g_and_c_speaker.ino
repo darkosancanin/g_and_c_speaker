@@ -10,8 +10,8 @@
 #include <Time.h>
 #include <DS1307RTC.h>
 
-#define ONE_WIRE_BUS 2 // Data wire is plugged into pin 2 on the Arduino
 WavPlayer WP;
+#define ONE_WIRE_BUS 2 // Data wire is plugged into pin 2 on the Arduino
 
 // Setup a oneWire instance to communicate with any OneWire devices 
 // (not just Maxim/Dallas temperature ICs)
@@ -20,29 +20,54 @@ OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
 
+#define DECODE_NEC 
+
+int RECV_PIN = 8;
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+
+
 ISR(TIMER1_COMPA_vect) 
 {
   WP.handle_interrupt();
 }
 
 void setup(){
+  Serial.begin(9600);
   WP.initialize();
   // Start up the library
   sensors.begin();
-  
   WP.play_temperature();
+  //irrecv.enableIRIn();
 }
 
 void loop(){
+  //check_for_remote_control();
   WP.check_if_unused_buffer_needs_to_be_filled();
   //get_time();
+}
+
+void check_for_remote_control(){
+  if (irrecv.decode(&results)) {
+    Serial.println(results.value, HEX);
+    Serial.println(results.decode_type);
+    if(results.decode_type == 1){
+      WP.play_temperature();
+      Serial.println("NEC received.");
+    }
+  irrecv.resume(); // Receive the next value
+  } 
+  else{
+    //Serial.println("No IR."); 
+  }
 }
 
 void get_time(){
   tmElements_t tm;
 
   if (RTC.read(tm)) {
-    Serial.print("Ok, Time = ");
+    Serial.print("Time = ");
     print2digits(tm.Hour);
     Serial.write(':');
     print2digits(tm.Minute);
@@ -57,11 +82,10 @@ void get_time(){
     Serial.println();
   } else {
     if (RTC.chipPresent()) {
-      Serial.println("The DS1307 is stopped.  Please run the SetTime");
-      Serial.println("example to initialize the time and begin running.");
+      Serial.println("DS1307 stopped.");
       Serial.println();
     } else {
-      Serial.println("DS1307 read error!  Please check the circuitry.");
+      Serial.println("DS1307 error!");
       Serial.println();
     }
     delay(9000);
@@ -77,14 +101,9 @@ void print2digits(int number) {
 }
 
 void get_temperature(){
-  // call sensors.requestTemperatures() to issue a global temperature
-  // request to all devices on the bus
-  //--Serial.print(" Requesting temperatures...");
-  //--sensors.requestTemperatures(); // Send the command to get temperatures
-  //--Serial.println("DONE");
-
-  //--Serial.print("Temperature for Device 1 is: ");
-  //--Serial.print(sensors.getTempCByIndex(0)); // Why "byIndex"? 
-  //--  // You can have more than one IC on the same bus. 
-  //--  // 0 refers to the first IC on the wire
+  // call sensors.requestTemperatures() to issue a global temperature request to all devices on the bus
+  sensors.requestTemperatures(); // Send the command to get temperatures
+  Serial.print("Temp is: ");
+  Serial.print(sensors.getTempCByIndex(0)); // Why "byIndex"? 
+  // You can have more than one IC on the same bus. 0 refers to the first IC on the wire
 }

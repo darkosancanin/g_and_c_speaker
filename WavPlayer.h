@@ -5,7 +5,7 @@
 
 #define SPEAKER_PIN 3 // This is the OC2B PWM pin and cant be changed.
 #define SD_CS_PIN 4 
-#define SAMPLE_BUFFER_SIZE 128
+#define SAMPLE_BUFFER_SIZE 64
 #define WAV_FILE_SAMPLE_RATE 8000
 #define WAV_FILE_START_INDEX 44
 
