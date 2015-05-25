@@ -10,100 +10,89 @@
 #include <Time.h>
 #include <DS1307RTC.h>
 
-WavPlayer WP;
-#define ONE_WIRE_BUS 2 // Data wire is plugged into pin 2 on the Arduino
+#define SD_CS_PIN 4 
+#define ONE_WIRE_PIN 2
+#define IR_RECEIVER_PIN 8
+#define MODE_IR_LISTENING 0
+#define MODE_PLAYING_WAV 1
 
-// Setup a oneWire instance to communicate with any OneWire devices 
-// (not just Maxim/Dallas temperature ICs)
-OneWire oneWire(ONE_WIRE_BUS);
-
-// Pass our oneWire reference to Dallas Temperature.
-DallasTemperature sensors(&oneWire);
-
-#define DECODE_NEC 
-
-int RECV_PIN = 8;
-IRrecv irrecv(RECV_PIN);
-decode_results results;
-
-
+SdFat SD;
+WavPlayer WP(&SD);
+OneWire oneWire(ONE_WIRE_PIN);
+DallasTemperature DT(&oneWire);
+IRrecv IR(IR_RECEIVER_PIN);
+decode_results ir_decode_results;
+volatile char mode = MODE_IR_LISTENING;
 
 ISR(TIMER1_COMPA_vect) 
 {
-  WP.handle_interrupt();
+  if(mode == MODE_PLAYING_WAV){
+    boolean more_data_to_be_played = WP.update_sample_value_being_played();
+    if(more_data_to_be_played == false){
+      start_listening_to_ir_receiver();
+    }
+  }
+}
+
+void start_listening_to_ir_receiver(){
+  mode = MODE_IR_LISTENING;
+  IR.enableIRIn();
+  IR.resume();
+}
+
+void stop_listening_to_ir_receiver(){
+  TIMSK2 = 0;
 }
 
 void setup(){
   Serial.begin(9600);
-  WP.initialize();
-  // Start up the library
-  sensors.begin();
-  WP.play_temperature();
-  //irrecv.enableIRIn();
+  pinMode(10, OUTPUT); // Pin 10 must be left as an output for the SD library.
+  if (!SD.begin(SD_CS_PIN, SPI_HALF_SPEED)){
+    SD.initErrorHalt();
+    Serial.println("SD initialization failed.");
+  }
+  DT.begin();
+  start_listening_to_ir_receiver();
 }
 
 void loop(){
-  //check_for_remote_control();
-  WP.check_if_unused_buffer_needs_to_be_filled();
-  //get_time();
-}
-
-void check_for_remote_control(){
-  if (irrecv.decode(&results)) {
-    Serial.println(results.value, HEX);
-    Serial.println(results.decode_type);
-    if(results.decode_type == 1){
-      WP.play_temperature();
-      Serial.println("NEC received.");
-    }
-  irrecv.resume(); // Receive the next value
-  } 
-  else{
-    //Serial.println("No IR."); 
+  if(mode == MODE_IR_LISTENING){
+    check_remote_control_receiver_data(); 
+  }
+  else if(mode == MODE_PLAYING_WAV){
+    WP.check_if_unused_buffer_needs_to_be_filled();
   }
 }
 
-void get_time(){
-  tmElements_t tm;
+void check_remote_control_receiver_data(){
+  if (IR.decode(&ir_decode_results)) {
+    if(ir_decode_results.decode_type == 1){
+      stop_listening_to_ir_receiver();
+      play_temperature();
+    }
+  } 
+}
 
+void play_temperature(){
+  mode = MODE_PLAYING_WAV;
+  DT.requestTemperatures();
+  float temperature = DT.getTempCByIndex(0);
+  Serial.print("Temp is: ");
+  Serial.println(temperature);
+  WP.play_temperature(22.5);
+}
+
+void play_current_time(){
+  tmElements_t tm;
   if (RTC.read(tm)) {
-    Serial.print("Time = ");
-    print2digits(tm.Hour);
-    Serial.write(':');
-    print2digits(tm.Minute);
-    Serial.write(':');
-    print2digits(tm.Second);
-    Serial.print(", Date (D/M/Y) = ");
-    Serial.print(tm.Day);
-    Serial.write('/');
-    Serial.print(tm.Month);
-    Serial.write('/');
-    Serial.print(tmYearToCalendar(tm.Year));
-    Serial.println();
-  } else {
+    WP.play_current_time(tm.Hour, tm.Minute);
+  }
+  else{
     if (RTC.chipPresent()) {
       Serial.println("DS1307 stopped.");
-      Serial.println();
     } else {
-      Serial.println("DS1307 error!");
+      Serial.println("DS1307 error.");
       Serial.println();
     }
-    delay(9000);
   }
-  delay(1000);
-}
-
-void print2digits(int number) {
-  if (number >= 0 && number < 10) {
-    Serial.write('0');
-  }
-  Serial.print(number);
-}
-
-void get_temperature(){
-  // call sensors.requestTemperatures() to issue a global temperature request to all devices on the bus
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  Serial.print("Temp is: ");
-  Serial.print(sensors.getTempCByIndex(0)); // Why "byIndex"? 
-  // You can have more than one IC on the same bus. 0 refers to the first IC on the wire
 }

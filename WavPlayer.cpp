@@ -3,14 +3,8 @@
 #include <SPI.h>
 #include <SdFat.h>
 
-const char * WavPlayer::files_to_play[4] = {"CHARLIE.WAV", "GABBY.WAV", "CHARLIE.WAV", "GABBY.WAV"};
-
-void WavPlayer::initialize(){
-  pinMode(10, OUTPUT); // Pin 10 must be left as an output or the SD library functions will not work.
-  if (!sd.begin(SD_CS_PIN, SPI_HALF_SPEED)){
-    sd.initErrorHalt();
-    Serial.println("SD init failed.");
-  }
+WavPlayer::WavPlayer(SdFat* sdfat){
+  sd = sdfat;
 }
 
 void WavPlayer::check_if_unused_buffer_needs_to_be_filled(){
@@ -19,7 +13,7 @@ void WavPlayer::check_if_unused_buffer_needs_to_be_filled(){
   }
 }
 
-void WavPlayer::handle_interrupt(){
+boolean WavPlayer::update_sample_value_being_played(){
   if(sample_buffer_playback_index >= SAMPLE_BUFFER_SIZE){
     if(sample_buffer_not_being_read_is_filled == true){
       swap_buffers();
@@ -27,25 +21,51 @@ void WavPlayer::handle_interrupt(){
     else{
       if(more_data_to_be_read == false){
         stop_playback();
+        return false;
       }
-      return;
+      return true;
     }
   }
   char sample_to_play = sample_buffer_being_read[sample_buffer_playback_index];
   OCR2B = sample_to_play;   
   sample_buffer_playback_index++;
+  return true;
 }
 
-void WavPlayer::play_temperature(){
+void WavPlayer::play_temperature(float temperature){
+  reset_variables();
+  int significant_number = (int)temperature;
+  files_to_play[0] = 0; // First file to play is 'temperature is'.
+  files_to_play[1] = significant_number + 1; // Second file is the significant number, the first number in the lookup table starts at index 2. 
+  String temperature_string = String(temperature);
+  // The third file to play is the 'point x degrees', extract the first decimal value.
+  int decimal_point_position = temperature_string.indexOf('.');
+  files_to_play[2] = temperature_string.substring(decimal_point_position, decimal_point_position + 1).toInt();
   fill_unused_buffer();
   swap_buffers();
   start_playback();
 }
 
+void WavPlayer::play_current_time (uint8_t hour, uint8_t minute){
+  
+}
+
+void WavPlayer::reset_variables(){
+  number_of_files_to_play = 3;
+  index_of_current_file_being_read = 0;
+  more_data_to_be_read = true;
+  bytes_read_from_current_file = 0;
+  sample_buffer_not_being_read_is_filled = true;
+  sample_buffer_playback_index = 0;
+}
+
 void WavPlayer::fill_unused_buffer(){
   int bytes_filled_in_buffer = 0;
   while(index_of_current_file_being_read < number_of_files_to_play){
-    File file = sd.open(files_to_play[index_of_current_file_being_read]);
+    uint8_t file_to_play = files_to_play[index_of_current_file_being_read];
+    char filename_buffer[12];
+    strcpy_P(filename_buffer, (char*)pgm_read_word(&(filename_lookup_table[file_to_play])));
+    File file = sd->open(filename_buffer);
     file.seek(WAV_FILE_START_INDEX + bytes_read_from_current_file);
     int bytes_left_in_buffer = SAMPLE_BUFFER_SIZE - bytes_filled_in_buffer;
     int bytes_filled = file.read(&sample_buffer_not_being_read[bytes_filled_in_buffer], bytes_left_in_buffer);
@@ -81,15 +101,14 @@ void WavPlayer::swap_buffers(){
 }
 
 void WavPlayer::start_playback() {
-  Serial.println("Starting.");
   pinMode(SPEAKER_PIN, OUTPUT);
   
   // Set up Timer 2 to do pulse width modulation on the speaker pin. //
   // Use internal clock [page 164]
   ASSR &= ~(_BV(EXCLK) | _BV(AS2));
   // Set fast PWM mode  [page 160]
-  TCCR2A |= _BV(WGM21) | _BV(WGM20);
-  TCCR2B &= ~_BV(WGM22);
+  TCCR2A = _BV(WGM21) | _BV(WGM20);
+  TCCR2B = ~_BV(WGM22);
   // Do non-inverting PWM on pin OC2B [page 159]
   TCCR2A = (TCCR2A | _BV(COM2B1)) & ~_BV(COM2B0);
   TCCR2A &= ~(_BV(COM2A1) | _BV(COM2A0));
@@ -107,12 +126,11 @@ void WavPlayer::start_playback() {
   // Set the compare register (OCR1A).
   OCR1A = F_CPU / WAV_FILE_SAMPLE_RATE; // 16e6 (16Mhz) / 8000 = 2000
   // Enable interrupt when TCNT1 == OCR1A [page 139]
-  TIMSK1 |= _BV(OCIE1A);
+  TIMSK1 = _BV(OCIE1A);
   sei();
 }
 
 void WavPlayer::stop_playback(){
-  Serial.println("Stopping.");
   TIMSK1 &= ~_BV(OCIE1A); // Disable playback per-sample interrupt.
   TCCR1B &= ~_BV(CS10); // Disable the per-sample timer completely.
   TCCR2B &= ~_BV(CS10); // Disable the PWM timer.
