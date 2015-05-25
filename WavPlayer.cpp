@@ -36,11 +36,10 @@ void WavPlayer::play_temperature(float temperature){
   reset_variables();
   int significant_number = (int)temperature;
   files_to_play[0] = 0; // First file to play is 'temperature is'.
-  files_to_play[1] = significant_number + 1; // Second file is the significant number, the first number in the lookup table starts at index 2. 
-  String temperature_string = String(temperature);
-  // The third file to play is the 'point x degrees', extract the first decimal value.
-  int decimal_point_position = temperature_string.indexOf('.');
-  files_to_play[2] = temperature_string.substring(decimal_point_position, decimal_point_position + 1).toInt();
+  files_to_play[1] = significant_number + 1; // Second file is the significant number, the first number in the lookup table starts x entries in. 
+  char decimal_buffer[4];
+  dtostrf(temperature, 4, 1, decimal_buffer);
+  files_to_play[2] = String(decimal_buffer[3]).toInt() + 60; // The third file to play is the 'point x degrees', the first number in the lookup table starts x entries in.
   fill_unused_buffer();
   swap_buffers();
   start_playback();

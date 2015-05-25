@@ -67,8 +67,14 @@ void loop(){
 void check_remote_control_receiver_data(){
   if (IR.decode(&ir_decode_results)) {
     if(ir_decode_results.decode_type == 1){
-      stop_listening_to_ir_receiver();
-      play_temperature();
+      if(ir_decode_results.value == 16582903){
+        stop_listening_to_ir_receiver();
+        play_temperature();
+      }
+      else{
+        stop_listening_to_ir_receiver();
+        play_current_time();
+      }
     }
   } 
 }
@@ -79,6 +85,7 @@ void play_temperature(){
   float temperature = DT.getTempCByIndex(0);
   Serial.print("Temp is: ");
   Serial.println(temperature);
+  //WP.play_temperature(temperature);
   WP.play_temperature(22.5);
 }
 
@@ -86,6 +93,10 @@ void play_current_time(){
   tmElements_t tm;
   if (RTC.read(tm)) {
     WP.play_current_time(tm.Hour, tm.Minute);
+    Serial.print("Time: ");
+    Serial.print(tm.Hour);
+    Serial.print(":");
+    Serial.println(tm.Minute);
   }
   else{
     if (RTC.chipPresent()) {
@@ -95,4 +106,5 @@ void play_current_time(){
       Serial.println();
     }
   }
+  start_listening_to_ir_receiver();
 }
