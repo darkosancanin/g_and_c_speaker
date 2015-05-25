@@ -35,7 +35,7 @@ boolean WavPlayer::update_sample_value_being_played(){
 void WavPlayer::play_temperature(float temperature){
   reset_variables();
   int significant_number = (int)temperature;
-  files_to_play[0] = 0; // First file to play is 'temperature is'.
+  files_to_play[0] = 0; // First file to play is 'the temperature is'.
   files_to_play[1] = significant_number + 1; // Second file is the significant number, the first number in the lookup table starts x entries in. 
   char decimal_buffer[4];
   dtostrf(temperature, 4, 1, decimal_buffer);
@@ -46,7 +46,21 @@ void WavPlayer::play_temperature(float temperature){
 }
 
 void WavPlayer::play_current_time (uint8_t hour, uint8_t minute){
-  
+  reset_variables();
+  files_to_play[0] = 1; // First file to play is 'the time is'.
+  files_to_play[1] = hour + 1;
+  if(minute == 0){
+    files_to_play[2] = 80; // O'Clock. 
+  }
+  else if(minute < 10){
+    files_to_play[2] = minute + 71; // 01 or 02 etc  
+  }
+  else{
+    files_to_play[2] = minute + 1;
+  }
+  fill_unused_buffer();
+  swap_buffers();
+  start_playback();
 }
 
 void WavPlayer::reset_variables(){

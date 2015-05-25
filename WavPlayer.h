@@ -79,8 +79,18 @@ const char file_point_6_degrees[] PROGMEM = "POINT6.WAV";
 const char file_point_7_degrees[] PROGMEM = "POINT7.WAV";
 const char file_point_8_degrees[] PROGMEM = "POINT8.WAV";
 const char file_point_9_degrees[] PROGMEM = "POINT9.WAV";
+const char file_01[] PROGMEM = "01.WAV";
+const char file_02[] PROGMEM = "02.WAV";
+const char file_03[] PROGMEM = "03.WAV";
+const char file_04[] PROGMEM = "04.WAV";
+const char file_05[] PROGMEM = "05.WAV";
+const char file_06[] PROGMEM = "06.WAV";
+const char file_07[] PROGMEM = "07.WAV";
+const char file_08[] PROGMEM = "08.WAV";
+const char file_09[] PROGMEM = "09.WAV";
+const char file_oclock[] PROGMEM = "OCLOCK.WAV";
 
-const char* const filename_lookup_table[] PROGMEM = {file_temperature_is, file_time_is, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, file_10, file_11, file_12, file_13, file_14, file_15, file_16, file_17, file_18, file_19, file_20, file_21, file_22, file_23, file_24, file_25, file_26, file_27, file_28, file_29, file_30, file_31, file_32, file_33, file_34, file_35, file_36, file_37, file_38, file_39, file_40, file_41, file_42, file_43, file_44, file_45, file_46, file_47, file_48, file_49, file_50, file_51, file_52, file_53, file_54, file_55, file_56, file_57, file_58, file_59, file_point_0_degrees, file_point_1_degrees, file_point_2_degrees, file_point_3_degrees, file_point_4_degrees, file_point_5_degrees, file_point_6_degrees, file_point_7_degrees, file_point_8_degrees, file_point_9_degrees};
+const char* const filename_lookup_table[] PROGMEM = {file_temperature_is, file_time_is, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, file_10, file_11, file_12, file_13, file_14, file_15, file_16, file_17, file_18, file_19, file_20, file_21, file_22, file_23, file_24, file_25, file_26, file_27, file_28, file_29, file_30, file_31, file_32, file_33, file_34, file_35, file_36, file_37, file_38, file_39, file_40, file_41, file_42, file_43, file_44, file_45, file_46, file_47, file_48, file_49, file_50, file_51, file_52, file_53, file_54, file_55, file_56, file_57, file_58, file_59, file_point_0_degrees, file_point_1_degrees, file_point_2_degrees, file_point_3_degrees, file_point_4_degrees, file_point_5_degrees, file_point_6_degrees, file_point_7_degrees, file_point_8_degrees, file_point_9_degrees, file_01, file_02, file_03, file_04, file_05, file_06, file_07, file_08, file_09, file_oclock};
 
 class WavPlayer {
   private:
