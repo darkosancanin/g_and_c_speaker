@@ -20,15 +20,21 @@ boolean WavPlayer::update_sample_value_being_played(){
     }
     else{
       if(more_data_to_be_read == false){
-        stop_playback();
-        return false;
+        if(last_sample_value == 0){
+          stop_playback();
+          return false;
+        }
+        else{
+          last_sample_value--; 
+          OCR2B = last_sample_value;    
+        }
       }
-      //Serial.print("m");
       return true;
     }
   }
   char sample_to_play = sample_buffer_being_read[sample_buffer_playback_index];
   OCR2B = sample_to_play;   
+  last_sample_value = sample_to_play;
   sample_buffer_playback_index++;
   return true;
 }
