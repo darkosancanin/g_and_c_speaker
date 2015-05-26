@@ -106,7 +106,9 @@ class WavPlayer {
     volatile uint16_t sample_buffer_playback_index = 0;
     char * sample_buffer_being_read = sample_buffer_a;
     char * sample_buffer_not_being_read = sample_buffer_b;
+    uint8_t first_sample_value = 0;
     uint8_t last_sample_value = 0;
+    boolean is_ramping_up = true;
     void fill_unused_buffer (void);
     void start_playback (void);
     void stop_playback (void);

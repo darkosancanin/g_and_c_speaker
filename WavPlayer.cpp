@@ -74,6 +74,9 @@ void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute){
 }
 
 void WavPlayer::reset_variables(){
+  first_sample_value = 0;
+  last_sample_value = 0;
+  is_ramping_up = true;
   number_of_files_to_play = 3;
   index_of_current_file_being_read = 0;
   more_data_to_be_read = true;
