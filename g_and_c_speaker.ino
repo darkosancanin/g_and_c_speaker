@@ -85,26 +85,25 @@ void play_temperature(){
   float temperature = DT.getTempCByIndex(0);
   Serial.print("Temp is: ");
   Serial.println(temperature);
-  //WP.play_temperature(temperature);
-  WP.play_temperature(22.5);
+  WP.play_temperature(temperature);
 }
 
 void play_current_time(){
+  mode = MODE_PLAYING_WAV;
   tmElements_t tm;
   if (RTC.read(tm)) {
-    WP.play_current_time(tm.Hour, tm.Minute);
     Serial.print("Time: ");
     Serial.print(tm.Hour);
     Serial.print(":");
     Serial.println(tm.Minute);
+    WP.play_current_time(tm.Hour, tm.Minute);
   }
   else{
     if (RTC.chipPresent()) {
       Serial.println("DS1307 stopped.");
     } else {
       Serial.println("DS1307 error.");
-      Serial.println();
     }
+    start_listening_to_ir_receiver();
   }
-  start_listening_to_ir_receiver();
 }

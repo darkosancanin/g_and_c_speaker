@@ -23,6 +23,7 @@ boolean WavPlayer::update_sample_value_being_played(){
         stop_playback();
         return false;
       }
+      //Serial.print("m");
       return true;
     }
   }
@@ -45,18 +46,21 @@ void WavPlayer::play_temperature(float temperature){
   start_playback();
 }
 
-void WavPlayer::play_current_time (uint8_t hour, uint8_t minute){
+void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute){
   reset_variables();
   files_to_play[0] = 1; // First file to play is 'the time is'.
-  files_to_play[1] = hour + 1;
-  if(minute == 0){
-    files_to_play[2] = 80; // O'Clock. 
+  if(the_hour > 12){
+     the_hour -= 12;
   }
-  else if(minute < 10){
-    files_to_play[2] = minute + 71; // 01 or 02 etc  
+  files_to_play[1] = the_hour + 1;
+  if(the_minute == 0){
+    files_to_play[2] = 79; // O'Clock. 
+  }
+  else if(the_minute < 10){
+    files_to_play[2] = the_minute + 71; // 01 or 02 etc  
   }
   else{
-    files_to_play[2] = minute + 1;
+    files_to_play[2] = the_minute + 1;
   }
   fill_unused_buffer();
   swap_buffers();
