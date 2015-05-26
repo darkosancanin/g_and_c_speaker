@@ -14,6 +14,21 @@ void WavPlayer::check_if_unused_buffer_needs_to_be_filled(){
 }
 
 boolean WavPlayer::update_sample_value_being_played(){
+  if(have_ramped_up == false){
+    //Serial.println("not ramped"); 
+    if(last_sample_value >= sample_buffer_being_read[0]){
+       have_ramped_up = true;
+       //Serial.println("have_ramped_up"); 
+       //Serial.println((byte)last_sample_value);
+       //Serial.println((byte)sample_buffer_being_read[0]);
+     }
+     else{
+        last_sample_value++;
+       // Serial.println(last_sample_value); 
+        OCR2B = last_sample_value; 
+        return true;
+     }
+  }
   if(sample_buffer_playback_index >= SAMPLE_BUFFER_SIZE){
     if(sample_buffer_not_being_read_is_filled == true){
       swap_buffers();
@@ -32,7 +47,7 @@ boolean WavPlayer::update_sample_value_being_played(){
       return true;
     }
   }
-  char sample_to_play = sample_buffer_being_read[sample_buffer_playback_index];
+  byte sample_to_play = sample_buffer_being_read[sample_buffer_playback_index];
   OCR2B = sample_to_play;   
   last_sample_value = sample_to_play;
   sample_buffer_playback_index++;
@@ -74,9 +89,8 @@ void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute){
 }
 
 void WavPlayer::reset_variables(){
-  first_sample_value = 0;
   last_sample_value = 0;
-  is_ramping_up = true;
+  have_ramped_up = false;
   number_of_files_to_play = 3;
   index_of_current_file_being_read = 0;
   more_data_to_be_read = true;

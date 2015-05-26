@@ -4,7 +4,7 @@
 #include <SdFat.h>
 
 #define SPEAKER_PIN 3 // This is the OC2B PWM pin and cant be changed.
-#define SAMPLE_BUFFER_SIZE 128
+#define SAMPLE_BUFFER_SIZE 192
 #define WAV_FILE_SAMPLE_RATE 8000
 #define WAV_FILE_START_INDEX 44
 
@@ -100,15 +100,14 @@ class WavPlayer {
     int index_of_current_file_being_read = 0;
     boolean more_data_to_be_read = true;
     uint32_t bytes_read_from_current_file = 0;
-    char sample_buffer_a[SAMPLE_BUFFER_SIZE];
-    char sample_buffer_b[SAMPLE_BUFFER_SIZE];
+    byte sample_buffer_a[SAMPLE_BUFFER_SIZE];
+    byte sample_buffer_b[SAMPLE_BUFFER_SIZE];
     boolean sample_buffer_not_being_read_is_filled = true;
     volatile uint16_t sample_buffer_playback_index = 0;
-    char * sample_buffer_being_read = sample_buffer_a;
-    char * sample_buffer_not_being_read = sample_buffer_b;
-    uint8_t first_sample_value = 0;
-    uint8_t last_sample_value = 0;
-    boolean is_ramping_up = true;
+    byte * sample_buffer_being_read = sample_buffer_a;
+    byte * sample_buffer_not_being_read = sample_buffer_b;
+    volatile boolean have_ramped_up = false;
+    volatile byte last_sample_value = 0;
     void fill_unused_buffer (void);
     void start_playback (void);
     void stop_playback (void);
