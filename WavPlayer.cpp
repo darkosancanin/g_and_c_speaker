@@ -107,7 +107,7 @@ void WavPlayer::open_file(int index_of_file){
   uint8_t file_to_play = files_to_play[index_of_file];
   char filename_buffer[12];
   strcpy_P(filename_buffer, (char*)pgm_read_word(&(filename_lookup_table[file_to_play])));
-  File current_file_being_played = sd->open(filename_buffer);
+  current_file_being_played = sd->open(filename_buffer);
   current_file_being_played.seek(WAV_FILE_START_INDEX);
 }
 

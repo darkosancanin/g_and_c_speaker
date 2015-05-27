@@ -19,7 +19,7 @@
 #define MODE_IR_LISTENING 0
 #define MODE_PLAYING_WAV 1
 #define IR_CODE_TEMPERATURE 16582903
-#define IR_CODE_TIME 11111111
+#define IR_CODE_TIME 16615543
 
 SdFat SD;
 WavPlayer WP(&SD);
@@ -43,6 +43,7 @@ void start_listening_to_ir_receiver(){
   mode = MODE_IR_LISTENING;
   IR.enableIRIn();
   IR.resume();
+  delay(500);
 }
 
 void stop_listening_to_ir_receiver(){
@@ -52,6 +53,7 @@ void stop_listening_to_ir_receiver(){
 void setup(){
   Serial.begin(9600);
   pinMode(DAYLIGHT_SAVINGS_ENABLED_PIN, INPUT); 
+  digitalWrite(DAYLIGHT_SAVINGS_ENABLED_PIN, HIGH);
   pinMode(10, OUTPUT); // Pin 10 must be left as an output for the SD library.
   if (!SD.begin(SD_CS_PIN, SPI_HALF_SPEED)){
     SD.initErrorHalt();
@@ -87,8 +89,8 @@ void check_remote_control_receiver_data(){
   } 
   
   #ifdef DEBUG
-  Serial.print(F("Free Memory: "));
-  Serial.println(freeMemory());
+  //Serial.print(F("Free Memory: "));
+  //Serial.println(freeMemory());
   #endif
   
   delay(100);
