@@ -1,5 +1,6 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include <SPI.h>
 #include <SdFat.h>
 #include "WavPlayer.h"
@@ -51,7 +52,9 @@ void stop_listening_to_ir_receiver(){
 }
 
 void setup(){
+  wdt_disable();
   Serial.begin(9600);
+  Serial.println(F("Initializing values."));
   pinMode(DAYLIGHT_SAVINGS_ENABLED_PIN, INPUT); 
   digitalWrite(DAYLIGHT_SAVINGS_ENABLED_PIN, HIGH);
   pinMode(10, OUTPUT); // Pin 10 must be left as an output for the SD library.
@@ -63,9 +66,11 @@ void setup(){
   }
   DT.begin();
   start_listening_to_ir_receiver();
+  wdt_enable(WDTO_8S);
 }
 
 void loop(){
+  wdt_reset();
   if(mode == MODE_IR_LISTENING){
     check_remote_control_receiver_data(); 
   }
@@ -86,6 +91,7 @@ void check_remote_control_receiver_data(){
         play_current_time();
       }
     }
+    IR.resume();
   } 
   
   #ifdef DEBUG
