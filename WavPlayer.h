@@ -96,27 +96,28 @@ class WavPlayer {
   private:
     SdFat* sd;
     int files_to_play[3];
-    int number_of_files_to_play = 3;
-    int index_of_current_file_being_read = 0;
-    boolean more_data_to_be_read = true;
-    uint32_t bytes_read_from_current_file = 0;
+    int number_of_files_to_play;
+    int index_of_current_file_being_read;
+	File current_file_being_played;
+    boolean more_data_to_be_read;
     byte sample_buffer_a[SAMPLE_BUFFER_SIZE];
     byte sample_buffer_b[SAMPLE_BUFFER_SIZE];
     boolean sample_buffer_not_being_read_is_filled = true;
-    volatile uint16_t sample_buffer_playback_index = 0;
+    volatile uint16_t sample_buffer_playback_index;
     byte * sample_buffer_being_read = sample_buffer_a;
     byte * sample_buffer_not_being_read = sample_buffer_b;
-    volatile boolean have_ramped_up = false;
-    volatile byte last_sample_value = 0;
+    volatile boolean have_ramped_up;
+    volatile byte last_sample_value;
     void fill_unused_buffer (void);
     void start_playback (void);
     void stop_playback (void);
     void swap_buffers (void);
-    void reset_variables();
+    void initialize_state_variables();
+    void open_file(int);
   public:
     WavPlayer(SdFat*);
     boolean update_sample_value_being_played (void);
     void check_if_unused_buffer_needs_to_be_filled (void);
-    void play_current_time (uint8_t, uint8_t);
+    void play_current_time (uint8_t, uint8_t, boolean);
     void play_temperature (float);
 };

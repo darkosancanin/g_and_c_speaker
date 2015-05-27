@@ -9,12 +9,17 @@
 #include <Wire.h>
 #include <Time.h>
 #include <DS1307RTC.h>
+#include "MemoryFree.h"
 
+#define DEBUG 
 #define SD_CS_PIN 4 
 #define ONE_WIRE_PIN 2
 #define IR_RECEIVER_PIN 8
+#define DAYLIGHT_SAVINGS_ENABLED_PIN 5
 #define MODE_IR_LISTENING 0
 #define MODE_PLAYING_WAV 1
+#define IR_CODE_TEMPERATURE 16582903
+#define IR_CODE_TIME 11111111
 
 SdFat SD;
 WavPlayer WP(&SD);
@@ -46,10 +51,13 @@ void stop_listening_to_ir_receiver(){
 
 void setup(){
   Serial.begin(9600);
+  pinMode(DAYLIGHT_SAVINGS_ENABLED_PIN, INPUT); 
   pinMode(10, OUTPUT); // Pin 10 must be left as an output for the SD library.
   if (!SD.begin(SD_CS_PIN, SPI_HALF_SPEED)){
     SD.initErrorHalt();
-    Serial.println("SD initialization failed.");
+    #ifdef DEBUG
+    Serial.println(F("SD failed to initialize."));
+    #endif
   }
   DT.begin();
   start_listening_to_ir_receiver();
@@ -67,24 +75,33 @@ void loop(){
 void check_remote_control_receiver_data(){
   if (IR.decode(&ir_decode_results)) {
     if(ir_decode_results.decode_type == 1){
-      if(ir_decode_results.value == 16582903){
+      if(ir_decode_results.value == IR_CODE_TEMPERATURE){
         stop_listening_to_ir_receiver();
         play_temperature();
       }
-      else{
+      else if(ir_decode_results.value == IR_CODE_TIME){
         stop_listening_to_ir_receiver();
         play_current_time();
       }
     }
   } 
+  
+  #ifdef DEBUG
+  Serial.print(F("Free Memory: "));
+  Serial.println(freeMemory());
+  #endif
+  
+  delay(100);
 }
 
 void play_temperature(){
   mode = MODE_PLAYING_WAV;
   DT.requestTemperatures();
   float temperature = DT.getTempCByIndex(0);
-  Serial.print("Temp is: ");
+  #ifdef DEBUG
+  Serial.print(F("The temperature is: "));
   Serial.println(temperature);
+  #endif
   WP.play_temperature(temperature);
 }
 
@@ -92,18 +109,15 @@ void play_current_time(){
   mode = MODE_PLAYING_WAV;
   tmElements_t tm;
   if (RTC.read(tm)) {
-    Serial.print("Time: ");
+    #ifdef DEBUG
+    Serial.print(F("The time is: "));
     Serial.print(tm.Hour);
-    Serial.print(":");
+    Serial.print(F(":"));
     Serial.println(tm.Minute);
-    WP.play_current_time(tm.Hour, tm.Minute);
+    #endif
+    WP.play_current_time(tm.Hour, tm.Minute, digitalRead(DAYLIGHT_SAVINGS_ENABLED_PIN) == LOW);
   }
   else{
-    if (RTC.chipPresent()) {
-      Serial.println("DS1307 stopped.");
-    } else {
-      Serial.println("DS1307 error.");
-    }
     start_listening_to_ir_receiver();
   }
 }

@@ -14,17 +14,13 @@ void WavPlayer::check_if_unused_buffer_needs_to_be_filled(){
 }
 
 boolean WavPlayer::update_sample_value_being_played(){
+  // Ramp up at the start from 0 through to the first value in the sample to stop the pop at the start of the playback.
   if(have_ramped_up == false){
-    //Serial.println("not ramped"); 
     if(last_sample_value >= sample_buffer_being_read[0]){
        have_ramped_up = true;
-       //Serial.println("have_ramped_up"); 
-       //Serial.println((byte)last_sample_value);
-       //Serial.println((byte)sample_buffer_being_read[0]);
      }
      else{
         last_sample_value++;
-       // Serial.println(last_sample_value); 
         OCR2B = last_sample_value; 
         return true;
      }
@@ -35,7 +31,8 @@ boolean WavPlayer::update_sample_value_being_played(){
     }
     else{
       if(more_data_to_be_read == false){
-        if(last_sample_value == 0){
+        // Check if we have ramped down to 0 otherwise incrementally ramp down to stop the pop at the end of the playback.
+		if(last_sample_value == 0){
           stop_playback();
           return false;
         }
@@ -55,73 +52,86 @@ boolean WavPlayer::update_sample_value_being_played(){
 }
 
 void WavPlayer::play_temperature(float temperature){
-  reset_variables();
+  initialize_state_variables();
   int significant_number = (int)temperature;
-  files_to_play[0] = 0; // First file to play is 'the temperature is'.
-  files_to_play[1] = significant_number + 1; // Second file is the significant number, the first number in the lookup table starts x entries in. 
+  files_to_play[0] = 0; 
+  files_to_play[1] = significant_number + 1; 
   char decimal_buffer[4];
   dtostrf(temperature, 4, 1, decimal_buffer);
-  files_to_play[2] = String(decimal_buffer[3]).toInt() + 61; // The third file to play is the 'point x degrees', the first number in the lookup table starts x entries in.
+  files_to_play[2] = String(decimal_buffer[3]).toInt() + 61; 
+  open_file(0);
   fill_unused_buffer();
   swap_buffers();
   start_playback();
 }
 
-void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute){
-  reset_variables();
-  files_to_play[0] = 1; // First file to play is 'the time is'.
-  if(the_hour > 12){
-     the_hour -= 12;
+void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute, boolean daylight_savings_enabled){
+  initialize_state_variables();
+  if(daylight_savings_enabled == true){ 
+    the_hour++;
   }
+  if(the_hour == 24 || the_hour == 0){ 
+    the_hour = 12;
+  }
+  else if(the_hour > 12){
+    the_hour -= 12;
+  }
+  files_to_play[0] = 1; 
   files_to_play[1] = the_hour + 1;
   if(the_minute == 0){
-    files_to_play[2] = 79; // O'Clock. 
+    files_to_play[2] = 79; 
   }
   else if(the_minute < 10){
-    files_to_play[2] = the_minute + 71; // 01 or 02 etc  
+    files_to_play[2] = the_minute + 71; 
   }
   else{
     files_to_play[2] = the_minute + 1;
   }
+  open_file(0);
   fill_unused_buffer();
   swap_buffers();
   start_playback();
 }
 
-void WavPlayer::reset_variables(){
+void WavPlayer::initialize_state_variables(){
   last_sample_value = 0;
   have_ramped_up = false;
   number_of_files_to_play = 3;
   index_of_current_file_being_read = 0;
   more_data_to_be_read = true;
-  bytes_read_from_current_file = 0;
   sample_buffer_not_being_read_is_filled = true;
   sample_buffer_playback_index = 0;
+}
+
+void WavPlayer::open_file(int index_of_file){
+  uint8_t file_to_play = files_to_play[index_of_file];
+  char filename_buffer[12];
+  strcpy_P(filename_buffer, (char*)pgm_read_word(&(filename_lookup_table[file_to_play])));
+  File current_file_being_played = sd->open(filename_buffer);
+  current_file_being_played.seek(WAV_FILE_START_INDEX);
 }
 
 void WavPlayer::fill_unused_buffer(){
   int bytes_filled_in_buffer = 0;
   while(index_of_current_file_being_read < number_of_files_to_play){
-    uint8_t file_to_play = files_to_play[index_of_current_file_being_read];
-    char filename_buffer[12];
-    strcpy_P(filename_buffer, (char*)pgm_read_word(&(filename_lookup_table[file_to_play])));
-    File file = sd->open(filename_buffer);
-    file.seek(WAV_FILE_START_INDEX + bytes_read_from_current_file);
     int bytes_left_in_buffer = SAMPLE_BUFFER_SIZE - bytes_filled_in_buffer;
-    int bytes_filled = file.read(&sample_buffer_not_being_read[bytes_filled_in_buffer], bytes_left_in_buffer);
-    bytes_read_from_current_file += bytes_filled;
+    int bytes_filled = current_file_being_played.read(&sample_buffer_not_being_read[bytes_filled_in_buffer], bytes_left_in_buffer);
     bytes_filled_in_buffer += bytes_filled;
-    file.close();
+	// If the buffer is full then just break until the next buffer is ready.
     if(bytes_filled_in_buffer >= SAMPLE_BUFFER_SIZE){
       break;
     } 
-    else{
-      index_of_current_file_being_read++;
-      bytes_read_from_current_file = 0;
-      if(index_of_current_file_being_read == number_of_files_to_play){
-        more_data_to_be_read = false;
+    else {
+	  current_file_being_played.close();
+	  index_of_current_file_being_read++;
+	  // If there are no more files then break otherwise open the next file for reading.
+	  if(index_of_current_file_being_read == number_of_files_to_play){
+		more_data_to_be_read = false;
         break;
       }
+	  else{
+	    open_file(index_of_current_file_being_read);
+	  }
     }
   }
   sample_buffer_not_being_read_is_filled = true;
