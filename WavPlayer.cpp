@@ -79,10 +79,10 @@ void WavPlayer::play_current_time (uint8_t the_hour, uint8_t the_minute, boolean
   files_to_play[0] = 1; 
   files_to_play[1] = the_hour + 1;
   if(the_minute == 0){
-    files_to_play[2] = 79; 
+    files_to_play[2] = 80; 
   }
   else if(the_minute < 10){
-    files_to_play[2] = the_minute + 71; 
+    files_to_play[2] = the_minute + 70; 
   }
   else{
     files_to_play[2] = the_minute + 1;

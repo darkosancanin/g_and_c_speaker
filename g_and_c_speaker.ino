@@ -54,7 +54,7 @@ void stop_listening_to_ir_receiver(){
 void setup(){
   wdt_disable();
   Serial.begin(9600);
-  Serial.println(F("Initializing values."));
+  Serial.println(F("Initializing application."));
   pinMode(DAYLIGHT_SAVINGS_ENABLED_PIN, INPUT); 
   digitalWrite(DAYLIGHT_SAVINGS_ENABLED_PIN, HIGH);
   pinMode(10, OUTPUT); // Pin 10 must be left as an output for the SD library.
