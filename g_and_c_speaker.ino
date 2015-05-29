@@ -15,7 +15,7 @@
 #define DEBUG 
 #define SD_CS_PIN 4 
 #define ONE_WIRE_PIN 2
-#define IR_RECEIVER_PIN 8
+#define IR_RECEIVER_PIN 7
 #define DAYLIGHT_SAVINGS_ENABLED_PIN 5
 #define MODE_IR_LISTENING 0
 #define MODE_PLAYING_WAV 1
