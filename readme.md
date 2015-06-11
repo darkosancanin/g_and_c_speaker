@@ -14,5 +14,14 @@ DS18S20 - Arduino Library for Dallas Temperature ICs - https://github.com/milesb
 TSOP34338SS1F IR Receiver - Arduino-IRremote - https://github.com/shirriff/Arduino-IRremote  
 Micro SD - SdFat - https://github.com/greiman/SdFat  
 
-### Schematic
+## Schematic
 ![Schematic](https://raw.githubusercontent.com/darkosancanin/g_and_c_speaker/master/images/schematic.png)
+
+## Breadboard
+![Front](https://raw.githubusercontent.com/darkosancanin/g_and_c_speaker/master/images/breadboard_front.png)
+
+![Side](https://raw.githubusercontent.com/darkosancanin/g_and_c_speaker/master/images/breadboard_side.png)
+
+![Close Up](https://raw.githubusercontent.com/darkosancanin/g_and_c_speaker/master/images/breadboard_closeup.png)
+
+![Top](https://raw.githubusercontent.com/darkosancanin/g_and_c_speaker/master/images/breadboard_top.png)
